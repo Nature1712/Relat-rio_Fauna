@@ -1,0 +1,22 @@
+{
+  "name": "BPMA - Relatório de Fauna",
+  "short_name": "Relatório Fauna",
+  "description": "Gerador de relatórios de resgate de fauna silvestre.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#1b5e20",
+  "icons": [
+    {
+      "src": "https://picsum.photos/seed/bpma/192/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://picsum.photos/seed/bpma/512/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

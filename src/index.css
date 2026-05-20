@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bpma-green: #2e7d32;
+  --color-bpma-light: #1a1a1a;
+  --color-bpma-accent: #F5F5F7;
+  --color-ice-white: #F5F5F7;
+  --color-glass-bg: rgba(0, 0, 0, 0.8);
+  --color-glass-border: rgba(255, 255, 255, 0.2);
+}
+
+body {
+  background-color: #000;
+  color: #F5F5F7;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
+
+@layer base {
+  input, textarea, select {
+    @apply border border-white/20 bg-transparent text-[#F5F5F7] rounded-xl p-4 w-full focus:ring-2 focus:ring-white/40 focus:border-white outline-none transition-all placeholder:text-white/40 font-bold focus:shadow-[0_0_15px_rgba(255,255,255,0.2)];
+  }
+  
+  label {
+    @apply block mt-6 mb-2 font-black text-[11px] text-[#F5F5F7] uppercase tracking-[0.2em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)];
+  }
+
+  pre {
+    @apply font-mono text-[#F5F5F7] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)];
+  }
+}
+
+.glass-card {
+  @apply bg-transparent border-2 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] rounded-3xl;
+}
+
+.deep-shadow {
+  @apply shadow-[0_30px_60px_-15px_rgba(0,0,0,0.9)];
+}

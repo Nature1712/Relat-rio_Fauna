@@ -78,6 +78,20 @@ export default async (req: Request) => {
           "Access-Control-Allow-Origin": "*",
         },
       });
+    } else if (action === "improveText") {
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: {
+          parts: [{ text: payload.prompt }],
+        },
+      });
+      return new Response(JSON.stringify({ text: response.text }), {
+        status: 200,
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
     } else {
       return new Response(JSON.stringify({ error: `Ação '${action}' desconhecida no servidor proxy.` }), {
         status: 400,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, ChangeEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Trash2, Check, MapPin, Shield, Info, Copy, Camera, Loader2, History, Clock, ChevronDown, ChevronUp, X, Download, Smartphone, Sparkles, Fingerprint, FileText } from 'lucide-react';
+import { Trash2, Check, MapPin, Shield, Info, Copy, Camera, Loader2, History, Clock, ChevronDown, ChevronUp, X, Download, Smartphone } from 'lucide-react';
 import { executeAICommand } from './services/ai';
 
 declare global {
@@ -44,9 +44,7 @@ const CERRADO_BACKGROUNDS = [
   '/lobo_guara_negro.png',
   '/coruja_olhando_frente.png',
   '/tamandua_dia.png',
-  '/cerrado_background.png',
-  'solid-black',
-  '/onca_pintada.png'
+  '/cerrado_background.png'
 ];
 
 export default function App() {
@@ -66,7 +64,7 @@ export default function App() {
   });
 
   const [bgIndex, setBgIndex] = useState<number>(() => {
-    const promptVersion = "v13-onca-pintada";
+    const promptVersion = "v10-coruja-looking-forward";
     const savedVersion = localStorage.getItem('app_bg_version');
     if (savedVersion !== promptVersion) {
       localStorage.setItem('app_bg_version', promptVersion);
@@ -79,7 +77,7 @@ export default function App() {
   });
 
   const [bgUrl, setBgUrl] = useState<string>(() => {
-    const promptVersion = "v13-onca-pintada";
+    const promptVersion = "v10-coruja-looking-forward";
     const savedVersion = localStorage.getItem('app_bg_version');
     if (savedVersion !== promptVersion) {
       return CERRADO_BACKGROUNDS[0];
@@ -112,68 +110,15 @@ export default function App() {
     }
   };
 
-   const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [reportText, setReportText] = useState('');
   const [isExtracting, setIsExtracting] = useState<'resgate' | 'soltura' | null>(null);
-  const [isImprovingText, setIsImprovingText] = useState(false);
-  const [onlyGrammarCorrect, setOnlyGrammarCorrect] = useState(false);
-  const [showImproveButton, setShowImproveButton] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   
   // PWA/Installable states
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
-
-  // Document Extractor states
-  const [showDocExtractor, setShowDocExtractor] = useState(false);
-  const [docData, setDocData] = useState({
-    nome: '',
-    cpf: '',
-    nomeMae: '',
-    nomePai: '',
-    dataNascimento: '',
-    dataEmissao: '',
-  });
-  const [isExtractingDoc, setIsExtractingDoc] = useState(false);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [docTimer, setDocTimer] = useState<number>(900); // 15 minutos em segundos
-  const fileInputDoc = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (showDocExtractor) {
-      interval = setInterval(() => {
-        setDocTimer((prev) => {
-          if (prev <= 1) {
-            if (interval) clearInterval(interval);
-            setDocData({
-              nome: '',
-              cpf: '',
-              nomeMae: '',
-              dataNascimento: '',
-            });
-            setShowDocExtractor(false);
-            alert("Sessão encerrada: Por razões de sigilo policial e conformidade com a LGPD, a sessão do Extrator de Documentos (15 minutos) expirou e todos os dados provisórios foram eliminados da memória.");
-            return 900;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      setDocTimer(900);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [showDocExtractor]);
-
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
@@ -322,7 +267,7 @@ export default function App() {
       });
 
       const prompt = type === 'resgate' 
-        ? "Extract the GPS coordinates (latitude and longitude) from this image. IMPORTANT: In Brazil, latitude and longitude are NEGATIVE. Ensure the returned values have the correct minus sign and exactly 6 decimal places (e.g., -15.123456). If there is an animal, identify its species (Common Name (Scientific Name)). Para o campo 'circunstancias', atue como um Policial Técnico de Meio Ambiente realizando o registro de uma ocorrência de resgate de fauna. Analise a imagem e descreva a situação de forma técnica e concisa seguindo as diretrizes de alternância e variabilidade de termos técnicos: Contexto: O animal foi encontrado em área urbana (local). ATENÇÃO: NÃO inicie o texto com menções de que a equipe foi acionada via COPOM ou de que a viatura se deslocou até o local, pois este cabeçalho padrão já consta no texto fixo do relatório. Inicie diretamente descrevendo o local e a situação visual do espécime. Estado: Avalie se o espécime apresenta sinais de debilidade/ferimentos ou se está saudável. Procedimento: Descreva o manejo técnico e o acondicionamento seguro. VARIE a redação para não usar sempre o mesmo cliché. Em vez de 'caixa de transporte adequada', use sinônimos operacionais como 'caixa de contenção apropriada', 'compartimento de transporte seguro', 'gaiola de manejo adequada', ou 'recipiente ventilado seguro'. Conclusão: Se o animal estiver debilitado, indique o encaminhamento veterinário especializado. Se estiver saudável, indique que a destinação será a soltura/devolução à natureza, também VARIANDO as expressões (ex: 'reintrodução em área de preservação ambiental', 'soltura em reserva ecológica protegida', 'devolução ao seu habitat nativo seguro', 'reinserção em reserva florestal distante da zona residencial'). Tom de voz: Formal, objetivo, de relato ambiental policial técnico, profissional e direto, porém livre de jargões técnicos excessivos, burocráticos ou militares arcaicos (como o termo 'homiziado'). Prefira termos claros e diretos (como 'localizado', 'abrigado', 'escondido', ou 'encontrado' em vez de 'homiziado'). Return ONLY a JSON object with 'lat', 'lon', 'especie', 'circunstancias', and 'condicao' keys. For 'condicao', use the string 'Saudável' if the specimen appears healthy/uninjured, or 'Debilitado' if it shows visible signs of injury, distress, or debility. Use null for any values not found."
+        ? "Extract the GPS coordinates (latitude and longitude) from this image. IMPORTANT: In Brazil, latitude and longitude are NEGATIVE. Ensure the returned values have the correct minus sign and exactly 6 decimal places (e.g., -15.123456). If there is an animal, identify its species (Common Name (Scientific Name)). Para o campo 'circunstancias', atue como um Policial Militar Ambiental realizando o registro de uma ocorrência de resgate de fauna. Analise a imagem e descreva a situação de forma técnica e concisa seguindo as diretrizes de alternância e variabilidade de termos técnicos: Contexto: O animal foi encontrado em área urbana (local). ATENÇÃO: NÃO inicie o texto com menções de que a equipe foi acionada via COPOM ou de que a viatura se deslocou até o local, pois este cabeçalho padrão já consta no texto fixo do relatório. Inicie diretamente descrevendo o local e a situação visual do espécime. Estado: Avalie se o espécime apresenta sinais de debilidade/ferimentos ou se está saudável. Procedimento: Descreva o manejo técnico e o acondicionamento seguro. VARIE a redação para não usar sempre o mesmo cliché. Em vez de 'caixa de transporte adequada', use sinônimos operacionais como 'caixa de contenção apropriada', 'compartimento de transporte seguro', 'gaiola de manejo adequada', ou 'recipiente ventilado seguro'. Conclusão: Se o animal estiver debilitado, indique o encaminhamento veterinário especializado. Se estiver saudável, indique que a destinação será a soltura/devolução à natureza, também VARIANDO as expressões (ex: 'reintrodução em área de preservação ambiental', 'soltura em reserva ecológica protegida', 'devolução ao seu habitat nativo seguro', 'reinserção em reserva florestal distante da zona residencial'). Tom de voz: Formal, objetivo, militar operacional e bastante variado para evitar repetição textual entre ocorrências differentes. Return ONLY a JSON object with 'lat', 'lon', 'especie', 'circunstancias', and 'condicao' keys. For 'condicao', use the string 'Saudável' if the specimen appears healthy/uninjured, or 'Debilitado' if it shows visible signs of injury, distress, or debility. Use null for any values not found."
         : "Extract the GPS coordinates (latitude and longitude) from this image. IMPORTANT: In Brazil, latitude and longitude are NEGATIVE. Ensure the returned values have the correct minus sign and exactly 6 decimal places (e.g., -15.123456). Return ONLY a JSON object with 'lat' and 'lon' keys. Use null for any values not found.";
 
       const response = await executeAICommand({
@@ -334,14 +279,7 @@ export default function App() {
         }
       });
 
-      let jsonExtractText = response.text || '{}';
-      if (jsonExtractText.includes('```')) {
-        const match = jsonExtractText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        if (match) {
-          jsonExtractText = match[1];
-        }
-      }
-      const result = JSON.parse(jsonExtractText.trim());
+      const result = JSON.parse(response.text || '{}');
       
       setData(prev => {
         const newData = { ...prev };
@@ -375,8 +313,6 @@ export default function App() {
         return newData;
       });
 
-      setShowImproveButton(false);
-
       if (!result || (!result.lat && !result.lon && !result.especie)) {
         alert('Não foi possível extrair informações desta imagem. Tente uma foto mais nítida.');
       }
@@ -399,146 +335,6 @@ export default function App() {
     } finally {
       setIsExtracting(null);
       if (event.target) event.target.value = '';
-    }
-  };
-
-  const handleDocUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setIsExtractingDoc(true);
-
-    try {
-      const base64Data = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
-        reader.readAsDataURL(file);
-      });
-
-      const prompt = `Analise atentamente a imagem deste documento de identificação brasileiro (RG, CNH, DNI, etc.).
-Sua tarefa é extrair com precisão os seguintes campos cadastrais e retornar ESTRITAMENTE um objeto JSON estruturado.
-
-Campos solicitados:
-1. "nome": Nome completo da pessoa, em letras maiúsculas.
-2. "cpf": Cadastro de Pessoas Físicas, formatado com pontos e hífen (ex: "000.000.000-00"). Remova caracteres extras e retorne apenas no formato padrão brasileiro se encontrado.
-3. "nomeMae": Nome completo da mãe da pessoa, em letras maiúsculas.
-4. "nomePai": Nome completo do pai da pessoa, em letras maiúsculas. Se não constar (por exemplo, "Filiacao: <Nome da mae>" sem nome do pai, ou em branco, ou ilegível), retorne uma string vazia ("").
-5. "dataNascimento": Data de nascimento, formatada no padrão brasileiro de datas: "DD/MM/AAAA" (ex: "25/12/1990").
-6. "dataEmissao": Se o documento for um RG (Cédula de Identidade Civil / Registro Geral), extraia a data de emissão/expedição formatada no padrão brasileiro "DD/MM/AAAA" (ex: "15/06/2018"). Caso o documento não seja um RG (por exemplo, se for uma CNH) ou se não constar a data de emissão, retorne uma string vazia ("").
-
-Importante:
-- Se algum campo não estiver visível, estiver ilegível, ou não constar no documento, retorne uma string vazia ("") para aquele campo.
-- Não invente dados sob nenhuma hipótese.
-- Retorne EXCLUSIVAMENTE o objeto JSON com as chaves: "nome", "cpf", "nomeMae", "nomePai", "dataNascimento" e "dataEmissao". Nenhum outro texto, explicação ou formatação Markdown.`;
-
-      const response = await executeAICommand({
-        action: "extractOCR",
-        payload: {
-          prompt,
-          mimeType: file.type,
-          data: base64Data
-        }
-      });
-
-      let jsonText = response.text || '{}';
-      if (jsonText.includes('```')) {
-        const match = jsonText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        if (match) {
-          jsonText = match[1];
-        }
-      }
-      
-      const result = JSON.parse(jsonText.trim());
-      
-      setDocData(prev => ({
-        nome: (result.nome && result.nome.trim()) || prev.nome || '',
-        cpf: (result.cpf && result.cpf.trim()) || prev.cpf || '',
-        nomeMae: (result.nomeMae && result.nomeMae.trim()) || prev.nomeMae || '',
-        nomePai: (result.nomePai && result.nomePai.trim()) || prev.nomePai || '',
-        dataNascimento: (result.dataNascimento && result.dataNascimento.trim()) || prev.dataNascimento || '',
-        dataEmissao: (result.dataEmissao && result.dataEmissao.trim()) || prev.dataEmissao || '',
-      }));
-      setDocTimer(900); // Reinicia o cronômetro de 15 minutos com novos dados extraídos
-
-      const extractedSomething = result && (result.nome || result.cpf || result.nomeMae || result.nomePai || result.dataNascimento || result.dataEmissao);
-      if (!extractedSomething) {
-        alert('Não foi possível identificar novos dados cadastrais nesta imagem. Caso tenha enviado um lado do documento que não possui texto legível, tente novamente. Seus dados anteriores foram preservados.');
-      }
-    } catch (error: any) {
-      console.error('Doc Upload OCR Error:', error);
-      alert('Erro ao processar imagem do documento. Garanta que a foto esteja nítida ou digite os dados manualmente.');
-    } finally {
-      setIsExtractingDoc(false);
-      if (event.target) event.target.value = '';
-    }
-  };
-
-  const copyDocField = async (val: string, fieldName: string) => {
-    if (!val) return;
-    try {
-      await navigator.clipboard.writeText(val);
-      setCopiedField(fieldName);
-      setTimeout(() => setCopiedField(null), 2000);
-    } catch (err) {
-      console.error('Failed to copy document field:', err);
-    }
-  };
-
-  const handleImproveText = async () => {
-    if (!data.circunstancias || !data.circunstancias.trim()) {
-      alert("Escreva alguma informação ou rascunho nas circunstâncias primeiro para que a IA possa aprimorar.");
-      return;
-    }
-
-    setIsImprovingText(true);
-    try {
-      const prompt = onlyGrammarCorrect
-        ? `Você é um refinado assistente de idioma português. 
-Sua tarefa é REVISAR e CORRIGIR a ortografia, pontuação, acentuação e gramática do texto fornecido abaixo sobre circunstâncias de resgate de fauna.
-IMPORTANTE:
-1. Mantenha exatamente a mesma estrutura original do texto, os pontos principais, as ideias e o estilo descritivo do usuário. Não altere o texto para o formato de relatório policial padrão e não adicione novos detalhes de manejo ou destinação se eles não existiam no rascunho original.
-2. Apenas corrija erros ortográficos, gramaticais, de concordância e pontuação para tornar o texto gramaticalmente perfeito e fluido em português do Brasil, eliminando gírias ou erros de digitação.
-3. Retorne APENAS o texto revisado e corrigido, sem qualquer introdução, sem aspas adicionais, sem notas organizacionais e sem comentários de IA.
-
-Texto do rascunho do usuário para correção:
-"${data.circunstancias}"`
-        : `Você é um experiente Policial Técnico de Meio Ambiente brasileiro registrando uma ocorrência de resgate de fauna.
-Aprimore o rascunho de circunstâncias a seguir, tornando-o formal, objetivo, profissional e técnico, porém no tom de voz operacional adequado e livre de jargões técnicos excessivos, burocráticos ou militares arcaicos (como por exemplo o termo "homiziado"). Prefira termos claros e diretos (como "localizado", "abrigado", "escondido", ou "encontrado" em vez de "homiziado").
-IMPORTANTE:
-1. Remova saudações ou quaisquer introduções redundantes que mencionem acionamento via COPOM, equipe policial acionada, deslocamento de viatura ou início padrão/clássico da ocorrência, pois esses dados já estão fixos no cabeçalho do relatório principal.
-2. Inicie diretamente descrevendo o local urbano e as condições visuais operacionais do espécime (onde foi visto, estado ou situação física). Evite usar o termo "homiziado" para se referir ao animal abrigado, escondido ou localizado.
-3. Descreva o manejo técnico de contenção e o acondicionamento seguro (VARIE a redação para não usar clichês como 'caixa de transporte adequada' - use expressões como 'caixa de contenção apropriada', 'compartimento de transporte seguro', 'gaiola de manejo adequada', ou 'recipiente ventilado seguro').
-4. Se o animal estiver debilitado, indique o encaminhamento à assistência de veterinária especializada (HVET/UNB ou HFAUS). Se estiver saudável, indique a destinação para soltura ou devolução ao habitat natural distante de área residencial.
-5. Retorne APENAS o bloco de texto aprimorado, sem aspas, sem introduções adicionais, e sem observações de IA.
-
-Rascunho do usuário:
-"${data.circunstancias}"`;
-
-      const response = await executeAICommand({
-        action: "improveText",
-        payload: {
-          prompt
-        }
-      });
-
-      if (response && response.text) {
-        let improved = response.text.trim();
-        // Remove wrap quotes if returned by the model
-        if (improved.startsWith('"') && improved.endsWith('"')) {
-          improved = improved.slice(1, -1).trim();
-        }
-        if (improved.startsWith('`') && improved.endsWith('`')) {
-          improved = improved.slice(1, -1).trim();
-        }
-        updateField('circunstancias', improved);
-      } else {
-        alert(onlyGrammarCorrect ? "Não foi possível corrigir o texto. Tente novamente." : "Não foi possível aprimorar o texto. Tente novamente.");
-      }
-    } catch (error: any) {
-      console.error("Erro ao aprimorar/corrigir texto com IA:", error);
-      alert("Erro ao conectar com o serviço de IA. Verifique sua chave de faturamento ou sinal de internet.");
-    } finally {
-      setIsImprovingText(false);
     }
   };
 
@@ -592,49 +388,27 @@ Rascunho do usuário:
       condicao: 'Debilitado',
       circunstancias: '',
     });
-    setShowImproveButton(false);
   };
 
   const handleCoordinateChange = (field: keyof ReportData, value: string) => {
-    const prev = data[field] || '';
-    const isDeleting = value.length < prev.length;
-
-    if (isDeleting) {
-      // Se estiver deletando, deixa o usuário apagar livremente sem forçar formatação
-      setData(prevData => ({ ...prevData, [field]: value }));
-      return;
-    }
-
     // Permite digitar vírgula e converte para ponto
     let val = value.replace(',', '.');
-
-    // Remove tudo que não for número/dígito para reconstruir no formato correto
-    const digits = val.replace(/\D/g, '');
-
-    let formatted = '';
-    if (digits.length > 0) {
-      // Sempre começa com o sinal negativo "-" (coordenadas no Brasil)
-      formatted = '-';
-      if (digits.length <= 2) {
-        formatted += digits;
-        // Se já digitou os dois primeiros números, insere o ponto automaticamente
-        if (digits.length === 2) {
-          formatted += '.';
-        }
-      } else {
-        // Se tiver mais de 2 números, formata como "-xx.xxxxxxxx"
-        formatted += digits.substring(0, 2) + '.' + digits.substring(2, 12);
+    
+    // Regex mais permissivo para permitir digitar o sinal de menos e o ponto decimal
+    const regex = /^-?\d*\.?\d*$/;
+    
+    if (regex.test(val)) {
+      // Limita a 10 casas decimais
+      if (val.includes('.')) {
+        const parts = val.split('.');
+        if (parts[1] && parts[1].length > 10) return;
       }
-    } else {
-      // Permite que o usuário digite apenas o sinal de menos se desejar
-      if (val === '-') {
-        formatted = '-';
-      } else {
-        formatted = '';
-      }
+      
+      // Limita o comprimento total
+      if (val.length > 20) return;
+
+      setData(prev => ({ ...prev, [field]: val }));
     }
-
-    setData(prevData => ({ ...prevData, [field]: formatted }));
   };
 
   const formatCoordinate = (val: string, type: 'lat' | 'lon') => {
@@ -674,18 +448,9 @@ Rascunho do usuário:
           newData.condicao = 'Debilitado';
         }
       }
-
-      // Se selecionar soltura/outro (MANUAL), deixa o Estado de saúde marcado como Saudável
-      if (field === 'soltura' && value === 'MANUAL') {
-        newData.condicao = 'Saudável';
-      }
       
       return newData;
     });
-
-    if (field === 'circunstancias' && value.trim().length > 0) {
-      setShowImproveButton(true);
-    }
   };
 
   return (
@@ -694,8 +459,7 @@ Rascunho do usuário:
       <div 
         className="fixed inset-x-0 top-0 h-[100lvh] z-0 bg-cover bg-center bg-no-repeat transition-opacity duration-700 pointer-events-none select-none"
         style={{ 
-          backgroundImage: bgUrl === 'solid-black' ? 'none' : `url('${bgUrl}')`,
-          backgroundColor: bgUrl === 'solid-black' ? '#000' : 'transparent',
+          backgroundImage: `url('${bgUrl}')`,
           opacity: isGeneratingBg ? 0.6 : 1,
           transform: 'translate3d(0, 0, 0)',
           WebkitTransform: 'translate3d(0, 0, 0)',
@@ -707,9 +471,8 @@ Rascunho do usuário:
       
       {/* Subtle Overlay */}
       <div 
-        className="fixed inset-x-0 top-0 h-[100lvh] z-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none select-none transition-opacity duration-700"
+        className="fixed inset-x-0 top-0 h-[100lvh] z-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none select-none"
         style={{
-          opacity: bgUrl === 'solid-black' ? 0 : 1,
           transform: 'translate3d(0, 0, 0)',
           WebkitTransform: 'translate3d(0, 0, 0)',
           backfaceVisibility: 'hidden',
@@ -724,21 +487,20 @@ Rascunho do usuário:
         </div>
       )}
 
-      <div className="p-4 sm:p-8 lg:p-10 xl:p-12 relative z-10 max-w-none lg:pl-16">
-        <div className="flex flex-col lg:flex-row gap-8 items-start justify-start">
-          {/* Coluna da Esquerda: Formulário Principal */}
-          <div className="w-full max-w-xl space-y-6 flex-shrink-0">
-            <motion.div 
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="glass-card deep-shadow border-t-[12px] border-bpma-green overflow-hidden"
-            >
+      <div className="p-4 sm:p-8 max-w-xl mx-auto lg:mx-0 lg:ml-12 relative z-10">
+      <motion.div 
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="glass-card deep-shadow border-t-[12px] border-bpma-green overflow-hidden"
+      >
         <div className="p-8">
           <header className="text-center mb-10 border-b border-white/10 pb-6">
             <h1 className="text-2xl font-black text-white uppercase tracking-tight drop-shadow-2xl">
               Relatório de Fauna
             </h1>
             <div className="flex flex-wrap items-center justify-center gap-3 mt-3">
+              <p className="text-[10px] text-[#F5F5F7]/60 font-mono font-black tracking-widest">V12.0 PWA</p>
+              
               <button 
                 onClick={generateBackground}
                 className="bg-white/5 hover:bg-white/10 px-4 py-1.5 rounded-full text-[10px] text-white flex items-center gap-2 font-black transition-all border border-white/10"
@@ -754,25 +516,6 @@ Rascunho do usuário:
               >
                 <Smartphone className="w-3.5 h-3.5" />
                 {deferredPrompt ? 'INSTALAR APP' : 'BAIXAR NO CELULAR'}
-              </button>
-
-              <button 
-                onClick={() => {
-                  setShowDocExtractor(!showDocExtractor);
-                  if (!showDocExtractor) {
-                    setTimeout(() => {
-                      document.getElementById('doc-extractor-section')?.scrollIntoView({ behavior: 'smooth' });
-                    }, 150);
-                  }
-                }}
-                className={`px-4 py-1.5 rounded-full text-[10px] flex items-center gap-2 font-black transition-all border h-7 ${
-                  showDocExtractor 
-                    ? 'bg-[#2e7d32] border-[#2e7d32]/20 text-white shadow-[0_0_15px_rgba(46,125,50,0.4)] hover:bg-emerald-600' 
-                    : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                {showDocExtractor ? 'CONCLUIR EXTRAÇÃO' : 'ESCANEAR DOC'}
               </button>
             </div>
           </header>
@@ -978,60 +721,19 @@ Rascunho do usuário:
             <div>
               <div className="flex justify-between items-end mt-6 mb-2">
                 <label className="m-0 p-0">Circunstâncias do Resgate:</label>
-                <div className="flex items-center gap-2">
-                  {showImproveButton && (
-                    <div className="flex items-center gap-2">
-                      <label className="flex items-center gap-1.5 text-[10px] font-medium text-[#F5F5F7]/80 hover:text-white cursor-pointer select-none transition-all mr-1">
-                        <input 
-                          type="checkbox"
-                          checked={onlyGrammarCorrect}
-                          onChange={(e) => setOnlyGrammarCorrect(e.target.checked)}
-                          className="w-3.5 h-3.5 rounded border border-white/20 bg-black/40 text-emerald-600 focus:ring-0 focus:ring-offset-0 cursor-pointer transition-all"
-                        />
-                        <span>Apenas Ortografia</span>
-                      </label>
-                      <button 
-                        type="button"
-                        onClick={handleImproveText}
-                        disabled={isImprovingText || !data.circunstancias?.trim()}
-                        className="flex items-center gap-1.5 text-[10px] font-bold text-white bg-emerald-600 px-2 py-1 rounded-md hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95 cursor-pointer uppercase tracking-normal"
-                      >
-                        {isImprovingText ? (
-                          <>
-                            <Loader2 className="w-3 h-3 animate-spin text-white" />
-                            {onlyGrammarCorrect ? 'Corrigindo...' : 'Aprimorando...'}
-                          </>
-                        ) : (
-                          <>
-                            {onlyGrammarCorrect ? (
-                              <Check className="w-3 h-3 text-emerald-100" />
-                            ) : (
-                              <Sparkles className="w-3 h-3 text-emerald-100" />
-                            )}
-                            {onlyGrammarCorrect ? 'Corrigir Texto' : 'Melhorar com IA'}
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  )}
-                  <button 
-                    type="button"
-                    onClick={() => {
-                      updateField('circunstancias', '');
-                      setShowImproveButton(true);
-                    }}
-                    className="flex items-center gap-1 text-[10px] font-bold text-white bg-orange-600 px-2 py-1 rounded-md hover:bg-orange-700 transition-all border border-orange-500/50 shadow-[0_0_15px_rgba(234,88,12,0.3)] active:scale-95 cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Limpar Texto
-                  </button>
-                </div>
+                <button 
+                  onClick={() => updateField('circunstancias', '')}
+                  className="flex items-center gap-1 text-[10px] font-bold text-white bg-orange-600 px-2 py-1 rounded-md hover:bg-orange-700 transition-all border border-orange-500/50 shadow-[0_0_15px_rgba(234,88,12,0.3)] active:scale-95"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Limpar Texto
+                </button>
               </div>
               <textarea 
                 rows={6}
                 value={data.circunstancias}
                 onChange={(e) => updateField('circunstancias', e.target.value)}
-                placeholder="Escreva um rascunho rápido ou observações para que a IA possa polir e transformar em um relato policial técnico completo..."
+                placeholder="Ex: Encontrado em via pública..."
               />
             </div>
 
@@ -1076,294 +778,9 @@ Rascunho do usuário:
           </div>
         </div>
       </motion.div>
-    </div>
-
-    {/* Coluna da Direita: Extrator & Histórico */}
-    <div className="w-full max-w-xl space-y-6 mt-0">
-      {/* Seção do Extrator de Documentos (RG/CNH) */}
-      <AnimatePresence>
-        {showDocExtractor && (
-          <motion.div
-            id="doc-extractor-section"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            className="glass-card deep-shadow border-t-[12px] border-orange-500 overflow-hidden"
-          >
-            <div className="p-8">
-              <header className="flex items-center justify-between border-b border-white/10 pb-5 mb-6">
-                <div className="flex items-center gap-3">
-                  <Fingerprint className="w-6 h-6 text-orange-500" />
-                  <div>
-                    <h2 className="text-xl font-black text-white uppercase tracking-tight">Extrator de Documentos</h2>
-                    <p className="text-[10px] text-white/50 font-mono uppercase tracking-widest mt-0.5">Identidade, CPF e Nascimento via IA</p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-1.5">
-                  <button 
-                    onClick={() => setShowDocExtractor(false)}
-                    className="p-1 px-2.5 rounded-full bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-all text-xs font-black uppercase tracking-wider border border-white/10"
-                  >
-                    Fechar
-                  </button>
-                  <div className="flex items-center gap-1 text-[9px] font-mono font-black text-orange-400 bg-orange-950/40 border border-orange-500/20 px-2 py-0.5 rounded-md animate-pulse">
-                    <Clock className="w-3 h-3 text-orange-400" />
-                    EXPIRA EM: {formatTimer(docTimer)}
-                  </div>
-                </div>
-              </header>
-
-              <div className="space-y-5">
-                {/* Shield Confidentiality Notice */}
-                <div className="bg-orange-500/5 border border-orange-500/10 rounded-2xl p-4 flex gap-3 items-start select-none">
-                  <Shield className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-white text-xs font-black uppercase tracking-wider flex items-center gap-1.5 text-orange-400">
-                      Declaração de Sigilo & Proteção de Dados (LGPD)
-                    </h4>
-                    <p className="text-[11px] text-[#F5F5F7]/80 mt-1 font-semibold leading-relaxed">
-                      Este módulo opera de forma estritamente operacional e transitória. 
-                      Nenhuma imagem ou informação extraída é armazenada, catalogada ou compartilhada pelo sistema. 
-                      Por segurança, <strong className="text-orange-400">todas as informações extraídas e a sessão expiram em 15 minutos</strong>, destruindo temporariamente os dados locais.
-                    </p>
-                  </div>
-                </div>
-
-                {/* File picker */}
-                <div 
-                  onClick={() => fileInputDoc.current?.click()}
-                  className="border-2 border-dashed border-white/10 hover:border-orange-500/40 bg-white/5 hover:bg-white/10 rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 group flex flex-col items-center justify-center gap-3 shadow-inner"
-                >
-                  <Camera className="w-7 h-7 text-orange-500 group-hover:scale-110 group-hover:text-orange-400 transition-all duration-300" />
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-wider text-white">Toque para selecionar / Enviar foto do documento</p>
-                    <p className="text-[10px] text-orange-400 mt-1.5 font-bold uppercase tracking-wider">
-                      Leitura Frente & Verso Integrada
-                    </p>
-                    <p className="text-[9px] text-[#F5F5F7]/50 mt-1 font-semibold uppercase tracking-wider leading-relaxed">
-                      Carregue a Frente primeiro e depois o Verso (ou vice-versa) para mesclar todos os dados automaticamente sem apagar as leituras anteriores!
-                    </p>
-                  </div>
-                </div>
-                <input 
-                  type="file" 
-                  ref={fileInputDoc} 
-                  className="hidden" 
-                  accept="image/*" 
-                  onChange={handleDocUpload} 
-                />
-
-                {isExtractingDoc ? (
-                  <div className="border border-white/5 rounded-2xl p-8 bg-white/5 flex flex-col items-center justify-center gap-4 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-                    <div>
-                      <p className="text-xs font-black text-white uppercase tracking-[0.2em]">Extraindo Campos Cadastrais...</p>
-                      <p className="text-[10px] text-[#F5F5F7]/45 mt-1">Conectando ao gateway de IA seguro</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {/* Exposição e Cópia campo por campo */}
-                    <div className="grid grid-cols-1 gap-4">
-                      {/* Nome */}
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <label className="mt-0 mb-0 text-[10px] drop-shadow-none">Nome Completo</label>
-                          {copiedField === 'nome' && (
-                            <span className="text-[9px] font-black text-green-400 uppercase tracking-wider">Copiado!</span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            value={docData.nome}
-                            onChange={(e) => setDocData(prev => ({ ...prev, nome: e.target.value.toUpperCase() }))}
-                            placeholder="Aguardando documento..."
-                            className="bg-black/30 text-xs font-semibold focus:shadow-[0_0_15px_rgba(234,88,12,0.2)] focus:ring-orange-500/50"
-                          />
-                          <button 
-                            onClick={() => copyDocField(docData.nome, 'nome')}
-                            disabled={!docData.nome}
-                            className={`p-4 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer w-14 ${
-                              copiedField === 'nome' 
-                                ? 'bg-green-600 text-white' 
-                                : 'bg-orange-600 hover:bg-orange-500 text-white shadow-[0_0_15px_rgba(234,88,12,0.3)]'
-                            } disabled:opacity-20`}
-                          >
-                            {copiedField === 'nome' ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* CPF */}
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <label className="mt-0 mb-0 text-[10px] drop-shadow-none">CPF</label>
-                          {copiedField === 'cpf' && (
-                            <span className="text-[9px] font-black text-green-400 uppercase tracking-wider">Copiado!</span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            value={docData.cpf}
-                            onChange={(e) => setDocData(prev => ({ ...prev, cpf: e.target.value }))}
-                            placeholder="Aguardando documento..."
-                            className="bg-black/30 text-xs font-mono font-semibold focus:shadow-[0_0_15px_rgba(234,88,12,0.2)] focus:ring-orange-500/50"
-                          />
-                          <button 
-                            onClick={() => copyDocField(docData.cpf, 'cpf')}
-                            disabled={!docData.cpf}
-                            className={`p-4 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer w-14 ${
-                              copiedField === 'cpf' 
-                                ? 'bg-green-600 text-white' 
-                                : 'bg-orange-600 hover:bg-orange-500 text-white shadow-[0_0_15px_rgba(234,88,12,0.3)]'
-                            } disabled:opacity-20`}
-                          >
-                            {copiedField === 'cpf' ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Nome da Mãe */}
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <label className="mt-0 mb-0 text-[10px] drop-shadow-none">Nome da Mãe</label>
-                          {copiedField === 'nomeMae' && (
-                            <span className="text-[9px] font-black text-green-400 uppercase tracking-wider">Copiado!</span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            value={docData.nomeMae}
-                            onChange={(e) => setDocData(prev => ({ ...prev, nomeMae: e.target.value.toUpperCase() }))}
-                            placeholder="Aguardando documento..."
-                            className="bg-black/30 text-xs font-semibold focus:shadow-[0_0_15px_rgba(234,88,12,0.2)] focus:ring-orange-500/50"
-                          />
-                          <button 
-                            onClick={() => copyDocField(docData.nomeMae, 'nomeMae')}
-                            disabled={!docData.nomeMae}
-                            className={`p-4 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer w-14 ${
-                              copiedField === 'nomeMae' 
-                                ? 'bg-green-600 text-white' 
-                                : 'bg-orange-600 hover:bg-orange-500 text-white shadow-[0_0_15px_rgba(234,88,12,0.3)]'
-                            } disabled:opacity-20`}
-                          >
-                            {copiedField === 'nomeMae' ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Nome do Pai */}
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <label className="mt-0 mb-0 text-[10px] drop-shadow-none">Nome do Pai</label>
-                          {copiedField === 'nomePai' && (
-                            <span className="text-[9px] font-black text-green-400 uppercase tracking-wider">Copiado!</span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            value={docData.nomePai}
-                            onChange={(e) => setDocData(prev => ({ ...prev, nomePai: e.target.value.toUpperCase() }))}
-                            placeholder="Aguardando documento..."
-                            className="bg-black/30 text-xs font-semibold focus:shadow-[0_0_15px_rgba(234,88,12,0.2)] focus:ring-orange-500/50"
-                          />
-                          <button 
-                            onClick={() => copyDocField(docData.nomePai, 'nomePai')}
-                            disabled={!docData.nomePai}
-                            className={`p-4 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer w-14 ${
-                              copiedField === 'nomePai' 
-                                ? 'bg-green-600 text-white' 
-                                : 'bg-orange-600 hover:bg-orange-500 text-white shadow-[0_0_15px_rgba(234,88,12,0.3)]'
-                            } disabled:opacity-20`}
-                          >
-                            {copiedField === 'nomePai' ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Data de Nascimento */}
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <label className="mt-0 mb-0 text-[10px] drop-shadow-none">Data de Nascimento</label>
-                          {copiedField === 'dataNascimento' && (
-                            <span className="text-[9px] font-black text-green-400 uppercase tracking-wider">Copiado!</span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            value={docData.dataNascimento}
-                            onChange={(e) => setDocData(prev => ({ ...prev, dataNascimento: e.target.value }))}
-                            placeholder="Aguardando documento..."
-                            className="bg-black/30 text-xs font-semibold focus:shadow-[0_0_15px_rgba(234,88,12,0.2)] focus:ring-orange-500/50"
-                          />
-                          <button 
-                            onClick={() => copyDocField(docData.dataNascimento, 'dataNascimento')}
-                            disabled={!docData.dataNascimento}
-                            className={`p-4 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer w-14 ${
-                              copiedField === 'dataNascimento' 
-                                ? 'bg-green-600 text-white' 
-                                : 'bg-orange-600 hover:bg-orange-500 text-white shadow-[0_0_15px_rgba(234,88,12,0.3)]'
-                            } disabled:opacity-20`}
-                          >
-                            {copiedField === 'dataNascimento' ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Data de Emissão (RG) */}
-                      <div>
-                        <div className="flex justify-between items-center mb-1">
-                          <label className="mt-0 mb-0 text-[10px] drop-shadow-none">Data de Emissão (Se RG)</label>
-                          {copiedField === 'dataEmissao' && (
-                            <span className="text-[9px] font-black text-green-400 uppercase tracking-wider">Copiado!</span>
-                          )}
-                        </div>
-                        <div className="flex gap-2">
-                          <input 
-                            type="text" 
-                            value={docData.dataEmissao}
-                            onChange={(e) => setDocData(prev => ({ ...prev, dataEmissao: e.target.value }))}
-                            placeholder="Aguardando documento..."
-                            className="bg-black/30 text-xs font-semibold focus:shadow-[0_0_15px_rgba(234,88,12,0.2)] focus:ring-orange-500/50"
-                          />
-                          <button 
-                            onClick={() => copyDocField(docData.dataEmissao, 'dataEmissao')}
-                            disabled={!docData.dataEmissao}
-                            className={`p-4 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer w-14 ${
-                              copiedField === 'dataEmissao' 
-                                ? 'bg-green-600 text-white' 
-                                : 'bg-orange-600 hover:bg-orange-500 text-white shadow-[0_0_15px_rgba(234,88,12,0.3)]'
-                            } disabled:opacity-20`}
-                          >
-                            {copiedField === 'dataEmissao' ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {(docData.nome || docData.cpf || docData.nomeMae || docData.nomePai || docData.dataNascimento || docData.dataEmissao) && (
-                      <button
-                        onClick={() => setDocData({ nome: '', cpf: '', nomeMae: '', nomePai: '', dataNascimento: '', dataEmissao: '' })}
-                        className="w-full mt-4 py-4 rounded-2xl font-black text-[10px] text-red-500 border border-red-500/20 bg-transparent hover:bg-red-600 hover:text-white transition-all tracking-[0.2em] uppercase"
-                      >
-                        Limpar Dados do Extrator
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Seção de Histórico */}
-      <div className="mt-0 w-full">
+      <div className="mt-8 max-w-xl mx-auto lg:mx-0 lg:ml-12">
         <button 
           onClick={() => setShowHistory(!showHistory)}
           className="w-full glass-card p-5 flex items-center justify-between transition-all active:scale-[0.98] deep-shadow"
@@ -1462,9 +879,6 @@ Rascunho do usuário:
           )}
         </AnimatePresence>
       </div>
-
-    </div> {/* Fim da Coluna da Direita */}
-  </div> {/* Fim do Flex Container */}
 
       {/* PWA Installation Assistant Guide Overlay */}
       <AnimatePresence>

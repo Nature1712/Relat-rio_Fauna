@@ -31,7 +31,7 @@ async function startServer() {
   };
 
   // Mount standard Netlify-compatible path locally on Express so that code remains fully portable and offline-enabled
-  app.post("/.netlify/functions/gemini-proxy", async (req, res) => {
+  app.post("//.netlify/functions/gemini-proxy", async (req, res) => {
     try {
       const { action, payload } = req.body;
       console.log(`[Express Proxy] Processando ação: ${action}`);

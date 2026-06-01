@@ -18,7 +18,7 @@ body {
 
 @layer base {
   input, textarea, select {
-    @apply border border-white/25 bg-black/5 text-[#F5F5F7] rounded-xl p-4 w-full focus:ring-2 focus:ring-white/40 focus:border-white outline-none transition-all placeholder:text-white/50 font-bold focus:shadow-[0_0_15px_rgba(255,255,255,0.2)] backdrop-blur-md;
+    @apply border border-white/20 bg-transparent text-[#F5F5F7] rounded-xl p-4 w-full focus:ring-2 focus:ring-white/40 focus:border-white outline-none transition-all placeholder:text-white/40 font-bold focus:shadow-[0_0_15px_rgba(255,255,255,0.2)];
   }
 
   select option {
@@ -40,7 +40,7 @@ body {
 }
 
 .glass-card {
-  @apply bg-transparent border-2 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] rounded-3xl transition-all;
+  @apply bg-transparent border-2 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.6)] rounded-3xl;
 }
 
 .deep-shadow {

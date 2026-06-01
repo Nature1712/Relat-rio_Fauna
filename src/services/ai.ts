@@ -4,7 +4,7 @@ import { GoogleGenAI } from "@google/genai";
 // This ensures that API keys are never exposed or required client-side.
 const useProxy = true;
 
-export type AIAction = "generateBackground" | "extractOCR";
+export type AIAction = "generateBackground" | "extractOCR" | "improveText";
 
 export interface AIProxyOptions {
   action: AIAction;
@@ -89,6 +89,14 @@ export async function executeAICommand(options: AIProxyOptions): Promise<any> {
       config: { responseMimeType: "application/json" },
     });
     // Return standard object matching serverless response payload format
+    return { text: res.text };
+  } else if (options.action === "improveText") {
+    const res = await ai_client.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: {
+        parts: [{ text: options.payload.prompt }],
+      },
+    });
     return { text: res.text };
   }
 

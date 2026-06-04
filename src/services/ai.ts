@@ -77,7 +77,7 @@ export async function executeAICommand(options: AIProxyOptions): Promise<any> {
     return res;
   } else if (options.action === "extractOCR") {
     const res = await ai_client.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-3.5-flash",
       contents: [
         {
           parts: [

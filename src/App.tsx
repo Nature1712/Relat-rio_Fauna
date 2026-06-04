@@ -130,6 +130,8 @@ export default function App() {
   const [docData, setDocData] = useState({
     nome: '',
     cpf: '',
+    rg: '',
+    tipoDocumento: '', // 'RG' | 'CNH' | 'OUTRO' | ''
     nomeMae: '',
     nomePai: '',
     dataNascimento: '',
@@ -150,8 +152,12 @@ export default function App() {
             setDocData({
               nome: '',
               cpf: '',
+              rg: '',
+              tipoDocumento: '',
               nomeMae: '',
+              nomePai: '',
               dataNascimento: '',
+              dataEmissao: '',
             });
             setShowDocExtractor(false);
             alert("Sessão encerrada: Por razões de sigilo policial e conformidade com a LGPD, a sessão do Extrator de Documentos (15 minutos) expirou e todos os dados provisórios foram eliminados da memória.");
@@ -387,14 +393,14 @@ export default function App() {
       if (error?.message?.includes('403') || error?.message?.includes('permission')) {
         setHasKey(false);
         if (window.aistudio?.openSelectKey) {
-          alert('Para extrair dados de imagens, é necessário configurar uma chave de API válida com faturamento ativo.');
+          alert(`Para extrair dados de imagens, é necessário configurar uma chave de API válida com faturamento ativo. Erro: ${error.message || error}`);
           await window.aistudio.openSelectKey();
           setHasKey(true);
         } else {
-          alert('Erro de permissão. Verifique se sua chave de API possui faturamento ativo no Netlify ou no painel do provedor.');
+          alert(`Erro de permissão. Verifique se sua chave de API possui faturamento ativo no Netlify ou no painel do provedor. Erro: ${error.message || error}`);
         }
       } else {
-        alert('Erro ao processar imagem ou limite de requisições excedido. Verifique sua conexão e tente novamente.');
+        alert(`Erro ao processar imagem: ${error.message || "Erro desconhecido"}. Verifique sua chave de faturamento ou sinal de internet e tente novamente.`);
       }
     } finally {
       setIsExtracting(null);
@@ -419,17 +425,19 @@ export default function App() {
 Sua tarefa é extrair com precisão os seguintes campos cadastrais e retornar ESTRITAMENTE um objeto JSON estruturado.
 
 Campos solicitados:
-1. "nome": Nome completo da pessoa, em letras maiúsculas.
-2. "cpf": Cadastro de Pessoas Físicas, formatado com pontos e hífen (ex: "000.000.000-00"). Remova caracteres extras e retorne apenas no formato padrão brasileiro se encontrado.
-3. "nomeMae": Nome completo da mãe da pessoa, em letras maiúsculas.
-4. "nomePai": Nome completo do pai da pessoa, em letras maiúsculas. Se não constar (por exemplo, "Filiacao: <Nome da mae>" sem nome do pai, ou em branco, ou ilegível), retorne uma string vazia ("").
-5. "dataNascimento": Data de nascimento, formatada no padrão brasileiro de datas: "DD/MM/AAAA" (ex: "25/12/1990").
-6. "dataEmissao": Se o documento for um RG (Cédula de Identidade Civil / Registro Geral), extraia a data de emissão/expedição formatada no padrão brasileiro "DD/MM/AAAA" (ex: "15/06/2018"). Caso o documento não seja um RG (por exemplo, se for uma CNH) ou se não constar a data de emissão, retorne uma string vazia ("").
+1. "tipoDocumento": Identifique a natureza do documento. Deve ser rigorosamente "RG" se for Registro Geral/Cédula de Identidade, "CNH" se for Carteira Nacional de Habilitação, ou "OUTRO" se for outro tipo de documento.
+2. "rg": Se o documento for um RG (Cédula de Identidade), extraia o número do RG (Registro Geral) formatado com pontos e traço se aplicável (ex: "1.234.567" ou "1234567-8"). Se for outro documento (como CNH) ou se não encontrar o número do RG, retorne uma string vazia ("").
+3. "nome": Nome completo da pessoa, em letras maiúsculas.
+4. "cpf": Cadastro de Pessoas Físicas, formatado com pontos e hífen (ex: "000.000.000-00"). Remova caracteres extras e retorne apenas no formato padrão brasileiro se encontrado.
+5. "nomeMae": Nome completo da mãe da pessoa, em letras maiúsculas.
+6. "nomePai": Nome completo do pai da pessoa, em letras maiúsculas. Se não constar (por exemplo, "Filiacao: <Nome da mae>" sem nome do pai, ou em branco, ou ilegível), retorne uma string vazia ("").
+7. "dataNascimento": Data de nascimento, formatada no padrão brasileiro de datas: "DD/MM/AAAA" (ex: "25/12/1990").
+8. "dataEmissao": Se o documento for um RG, extraia a data de emissão/expedição formatada no padrão brasileiro "DD/MM/AAAA" (ex: "15/06/2018"). Caso o documento não seja um RG ou se não constar a data de emissão, retorne uma string vazia ("").
 
 Importante:
 - Se algum campo não estiver visível, estiver ilegível, ou não constar no documento, retorne uma string vazia ("") para aquele campo.
 - Não invente dados sob nenhuma hipótese.
-- Retorne EXCLUSIVAMENTE o objeto JSON com as chaves: "nome", "cpf", "nomeMae", "nomePai", "dataNascimento" e "dataEmissao". Nenhum outro texto, explicação ou formatação Markdown.`;
+- Retorne EXCLUSIVAMENTE o objeto JSON com as chaves: "tipoDocumento", "rg", "nome", "cpf", "nomeMae", "nomePai", "dataNascimento" e "dataEmissao". Nenhum outro texto, explicação ou formatação Markdown.`;
 
       const response = await executeAICommand({
         action: "extractOCR",
@@ -451,6 +459,8 @@ Importante:
       const result = JSON.parse(jsonText.trim());
       
       setDocData(prev => ({
+        tipoDocumento: (result.tipoDocumento && result.tipoDocumento.trim().toUpperCase()) || prev.tipoDocumento || '',
+        rg: (result.rg && result.rg.trim()) || prev.rg || '',
         nome: (result.nome && result.nome.trim()) || prev.nome || '',
         cpf: (result.cpf && result.cpf.trim()) || prev.cpf || '',
         nomeMae: (result.nomeMae && result.nomeMae.trim()) || prev.nomeMae || '',
@@ -460,13 +470,13 @@ Importante:
       }));
       setDocTimer(900); // Reinicia o cronômetro de 15 minutos com novos dados extraídos
 
-      const extractedSomething = result && (result.nome || result.cpf || result.nomeMae || result.nomePai || result.dataNascimento || result.dataEmissao);
+      const extractedSomething = result && (result.nome || result.cpf || result.rg || result.nomeMae || result.nomePai || result.dataNascimento || result.dataEmissao);
       if (!extractedSomething) {
         alert('Não foi possível identificar novos dados cadastrais nesta imagem. Caso tenha enviado um lado do documento que não possui texto legível, tente novamente. Seus dados anteriores foram preservados.');
       }
     } catch (error: any) {
       console.error('Doc Upload OCR Error:', error);
-      alert('Erro ao processar imagem do documento. Garanta que a foto esteja nítida ou digite os dados manualmente.');
+      alert(`Erro ao processar imagem do documento: ${error.message || "Erro desconhecido"}. Garanta que a foto esteja nítida ou digite os dados manualmente.`);
     } finally {
       setIsExtractingDoc(false);
       if (event.target) event.target.value = '';
@@ -536,7 +546,7 @@ Rascunho do usuário:
       }
     } catch (error: any) {
       console.error("Erro ao aprimorar/corrigir texto com IA:", error);
-      alert("Erro ao conectar com o serviço de IA. Verifique sua chave de faturamento ou sinal de internet.");
+      alert(`Erro ao conectar com o serviço de IA: ${error.message || "Erro desconhecido"}. Verifique se sua chave de faturamento e GEMINI_API_KEY estão ativas e configuradas no Netlify.`);
     } finally {
       setIsImprovingText(false);
     }
@@ -1225,6 +1235,36 @@ Rascunho do usuário:
                         </div>
                       </div>
 
+                      {/* RG */}
+                      <div>
+                        <div className="flex justify-between items-center mb-1">
+                          <label className="mt-0 mb-0 text-[10px] drop-shadow-none">RG (Cédula de Identidade)</label>
+                          {copiedField === 'rg' && (
+                            <span className="text-[9px] font-black text-green-400 uppercase tracking-wider">Copiado!</span>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={docData.rg}
+                            onChange={(e) => setDocData(prev => ({ ...prev, rg: e.target.value }))}
+                            placeholder="Aguardando documento..."
+                            className="bg-black/30 text-xs font-mono font-semibold focus:shadow-[0_0_15px_rgba(234,88,12,0.2)] focus:ring-orange-500/50"
+                          />
+                          <button 
+                            onClick={() => copyDocField(docData.rg, 'rg')}
+                            disabled={!docData.rg}
+                            className={`p-4 rounded-xl font-bold flex items-center justify-center transition-all cursor-pointer w-14 ${
+                              copiedField === 'rg' 
+                                ? 'bg-green-600 text-white' 
+                                : 'bg-orange-600 hover:bg-orange-500 text-white shadow-[0_0_15px_rgba(234,88,12,0.3)]'
+                            } disabled:opacity-20`}
+                          >
+                            {copiedField === 'rg' ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+
                       {/* Nome da Mãe */}
                       <div>
                         <div className="flex justify-between items-center mb-1">
@@ -1346,9 +1386,9 @@ Rascunho do usuário:
                       </div>
                     </div>
 
-                    {(docData.nome || docData.cpf || docData.nomeMae || docData.nomePai || docData.dataNascimento || docData.dataEmissao) && (
+                    {(docData.nome || docData.cpf || docData.rg || docData.tipoDocumento || docData.nomeMae || docData.nomePai || docData.dataNascimento || docData.dataEmissao) && (
                       <button
-                        onClick={() => setDocData({ nome: '', cpf: '', nomeMae: '', nomePai: '', dataNascimento: '', dataEmissao: '' })}
+                        onClick={() => setDocData({ nome: '', cpf: '', rg: '', tipoDocumento: '', nomeMae: '', nomePai: '', dataNascimento: '', dataEmissao: '' })}
                         className="w-full mt-4 py-4 rounded-2xl font-black text-[10px] text-red-500 border border-red-500/20 bg-transparent hover:bg-red-600 hover:text-white transition-all tracking-[0.2em] uppercase"
                       >
                         Limpar Dados do Extrator

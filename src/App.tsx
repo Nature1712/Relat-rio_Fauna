@@ -44,6 +44,7 @@ const CERRADO_BACKGROUNDS = [
   '/lobo_guara_negro.png',
   '/coruja_olhando_frente.png',
   '/tamandua_dia.png',
+  '/sarue_cerrado.png',
   '/cerrado_background.png',
   'solid-black',
   '/onca_pintada.png'

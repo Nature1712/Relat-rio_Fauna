@@ -8,6 +8,8 @@ Utilizados para criar a atmosfera visual do Cerrado Brasileiro com fauna local:
   > "cinematic shot of a maned wolf in the Brazilian Cerrado at sunset, silhouettes of a pair of macaws flying far away in the distance against the vibrant orange and amber sky, warm glowing light, photorealistic, 4k, high contrast"
 - **Onça Pintada em Caça (Novo):**
   > "cinematic shot of an imposing jaguar (onça-pintada) walking low, stealthy, and silently in hunting stance in the Brazilian Cerrado at sunset, warm glowing light, photorealistic, 4k, high contrast"
+- **Saruê sob o Ipê (Novo):**
+  > "cinematic shot of a cute white-eared opossum (saruê) perched on a branch of an ipê tree in the Brazilian Cerrado at sunset, warm glowing light, photorealistic, 4k, high contrast"
 
 ## 2. Prompt de Extração de Dados (IA)
 Utilizado para processar fotos e extrair GPS/Espécie de forma dinâmica e pouco repetitiva:
